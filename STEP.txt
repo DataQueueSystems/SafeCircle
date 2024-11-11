@@ -1,0 +1,31 @@
+
+Creating using command 
+1.npx @react-native-community/cli init ExploreYourNest
+2.Clean the gradlew
+3.Install some package for screens and components
+npm install react-native-paper react-native-vector-icons react-native-reanimated @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context react-native-gesture-handler
+
+AND 
+Android Setup for react-native-vector-icons
+Edit android/app/build.gradle (NOT android/build.gradle) and add:
+apply from: file("../../node_modules/react-native-vector-icons/fonts.gradle")
+Edit the android/settings.gradle file as shown below:
++ include ':react-native-vector-icons'
++ project(':react-native-vector-icons').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-vector-icons/android')
+Edit the android/app/build.gradle (located in the app folder) as shown below:
++ implementation project(':react-native-vector-icons')
+Edit your MainApplication.kt (located deep within android/app/src/main/java/...) as shown below (note that there are two places to edit):
++ import com.oblador.vectoricons.VectorIconsPackage;
++   , new VectorIconsPackage()
+
+
+4.
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
+  at the top of index.js
+  
+
+5.For tailwind css 
+npm install nativewind tailwindcss
+AND
+Run npx tailwindcss init to create a tailwind.config.js file
