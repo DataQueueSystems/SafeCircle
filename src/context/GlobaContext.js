@@ -112,8 +112,8 @@ export const AuthContextProvider = ({children}) => {
     if (granted) {
       // Get the user's current location
       Geolocation.getCurrentPosition(
-       async(position) => {
-         await setLocation(position.coords); // Update location state
+        async position => {
+          await setLocation(position.coords); // Update location state
         },
         error => {
           console.error('Error:', error.code, error.message);
@@ -131,9 +131,6 @@ export const AuthContextProvider = ({children}) => {
   //   fetchLocation();
   // }, []);
 
-
-
-
   const GetAllUser = async () => {
     try {
       const subscriber = firestore()
@@ -146,12 +143,13 @@ export const AuthContextProvider = ({children}) => {
             ...snapdata.data(),
           }));
           setAllusers(alluserDetail);
-  
           // Filter users with Positive diagnosis status
-          const positiveStatusUser = alluserDetail.filter(user =>
-            user.diagnosis?.status === 'Positive'
+          const positiveStatusUser = alluserDetail.filter(
+            user =>
+              user.diagnosis?.status === 'Positive' &&
+              user?.id != userDetail?.id,
           );
-          setPSuser(positiveStatusUser);  // Set the filtered list as needed
+          setPSuser(positiveStatusUser); // Set the filtered list as needed
         });
       // Clean up the listener when the component unmounts
       return () => subscriber();
@@ -159,14 +157,14 @@ export const AuthContextProvider = ({children}) => {
       console.log('Error is:', error);
     }
   };
-  
+
   useEffect(() => {
     const unsubscribe = GetAllUser();
     return () => {
       if (unsubscribe) unsubscribe(); // Clean up to prevent memory leaks
     };
   }, []);
-  
+
   const handleLogout = () => {
     Alert.alert(
       'Logout', //title
@@ -192,9 +190,6 @@ export const AuthContextProvider = ({children}) => {
       {cancelable: false}, // Optionally prevent dismissing by tapping outside the alert
     );
   };
-
-
-
 
   return (
     <Authcontext.Provider
@@ -222,8 +217,7 @@ export const AuthContextProvider = ({children}) => {
         // App user Location
         location,
         setLocation,
-
-
+        gotoSetting,
       }}>
       {children}
     </Authcontext.Provider>
