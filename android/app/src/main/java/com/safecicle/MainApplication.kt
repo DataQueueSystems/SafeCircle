@@ -1,4 +1,4 @@
-package com.safecicle
+package com.safecircle
 
 import android.app.Application
 import com.facebook.react.PackageList

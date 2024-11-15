@@ -4,16 +4,19 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from './Screen/auth/Login';
 import onBoardingScreen from './Screen/onBoarding/onBoardingScreen';
-import Home from './Screen/Home';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useAuthContext} from './context/GlobaContext';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ActivityIndicator, useTheme} from 'react-native-paper';
-import BootSplash from 'react-native-bootsplash';
+import Parent from './Screen/Parent';
+import ControlUser from './Screen/Admin/ControlUser';
+import Register from './Screen/auth/Register';
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const {isLogin, setIsLogin} = useAuthContext();
+  
+
   let theme = useTheme();
   useEffect(() => {
     AsyncStorage.getItem('IsLogin').then(value => {
@@ -27,7 +30,7 @@ export default function AppNavigator() {
     // const navigation = useNavigation();
     useEffect(() => {
       const timer = setTimeout(() => {
-        navigation.navigate('Home');
+        navigation.navigate('Parent');
       }, 100);
       // Clean up the timer if the component unmounts before the delay
       return () => clearTimeout(timer);
@@ -46,7 +49,7 @@ export default function AppNavigator() {
   };
 
   return (
-    <NavigationContainer onReady={() => BootSplash.hide({fade: true})}>
+    <NavigationContainer >
       <Stack.Navigator>
         {isLogin ? (
           <>
@@ -60,7 +63,11 @@ export default function AppNavigator() {
               component={Login}
               options={{headerShown: false}}
             />
-          
+            <Stack.Screen
+              name="Register"
+              component={Register}
+              options={{headerShown: false}}
+            />
           </>
         ) : (
           <>
@@ -70,11 +77,16 @@ export default function AppNavigator() {
               options={{headerShown: false}}
             />
             <Stack.Screen
-              name="Home"
-              component={Home}
+              name="Parent"
+              component={Parent}
               options={{headerShown: false}}
             />
-          
+            
+            <Stack.Screen
+              name="ControlUser"
+              component={ControlUser}
+              options={{headerShown: false}}
+            />
           </>
         )}
       </Stack.Navigator>

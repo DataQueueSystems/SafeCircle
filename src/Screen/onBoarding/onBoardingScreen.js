@@ -22,7 +22,6 @@ const OnboardingScreen = ({}) => {
   let windowHeight = Dimensions.get('window').height / 2.5;
 
   const {isLogin} = useAuthContext();
-  console.log(isLogin, 'isLogin');
   let theme = useTheme();
 
   const handleBtnPress = () => {
