@@ -56,6 +56,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  PermissionsAndroid,
   Platform,
   StyleSheet,
   Text,
@@ -69,11 +70,121 @@ import {useTheme} from 'react-native-paper';
 import RegularText from '../../customText/RegularText';
 import firestore from '@react-native-firebase/firestore';
 import {showToast} from '../../../utils/Toast';
+import Geolocation from '@react-native-community/geolocation';
 
 export default function MapComponent() {
   let theme = useTheme();
-  const {psUser, location, fetchLocation, userDetail} = useAuthContext();
-  console.log(location, 'location');
+
+  const [location, setLocation] = useState(null);
+  const [count, setCount] = useState(0);
+
+  // const intervalRef = useRef(null);
+
+  // useEffect(() => {
+  //   // Only start the interval once, when the component mounts and not every time location or userDetail changes
+  //   // if (intervalRef.current) {
+  //   intervalRef.current = setInterval(async () => {
+  //     if (location && userDetail?.id) {
+  //       // Alert.alert("for 5 seconds")
+  //       await fetchLocation();
+  //       // console.log(location, 'location');
+  //       await updateUserCoordinates(location); // Update location every 5 seconds
+  //     }
+  //   }, 9000); // Set interval for 5 seconds
+  //   // }
+  //   // Cleanup function to clear the interval when the component unmounts or location/userDetail changes
+  //   return () => clearInterval(intervalRef.current);
+  // }, [location, userDetail?.id]); // Only trigger the effect when location or userDetail changes
+
+  let locationWatcher = null;
+  let lastUpdateTime = 0; // Store the last update time
+
+  const startLocationUpdates = () => {
+    // Start watching position
+    locationWatcher = Geolocation.watchPosition(
+      async position => {
+        const {latitude, longitude} = position.coords;
+        setLocation(position.coords);
+        // Get the current timestamp
+        const currentTime = new Date().getTime();
+        // Check if the last update was more than 10 seconds ago
+        if (currentTime - lastUpdateTime >= 10000) {
+          // Call the function to update user coordinates in Firebase
+          updateUserCoordinates({latitude, longitude});
+          // Update the last update time
+          lastUpdateTime = currentTime;
+        } else {
+        }
+      },
+      error => {
+        console.log('Location error:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        distanceFilter: 0, // Receive updates regardless of movement
+        interval: 10000, // Update every 10 seconds
+        fastestInterval: 10000, // Minimum time between updates (10 seconds)
+        timeout: 15000, // Max time to wait for a position
+      },
+    );
+  };
+
+  const updateUserCoordinates = async location => {
+    try {
+      // console.log('Checking user id:', userDetail?.id);
+
+      if (userDetail?.id) {
+        try {
+          // Update coordinates in Firestore
+          await firestore()
+            .collection('users')
+            .doc(userDetail.id)
+            .update({
+              coordination: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+              },
+              count: count + 1, // Assuming `count` is defined somewhere
+            });
+          setCount(prev => prev + 1); // Update count in the state
+          console.log('Updated coordinates in Firestore.');
+        } catch (error) {
+          console.log('Error updating coordinates:', error);
+        }
+      } else {
+        console.log('User ID is not available.');
+      }
+    } catch (error) {
+      console.error('Error in updating coordinates in Firebase: ', error);
+    }
+  };
+
+  useEffect(() => {
+    const requestPermission = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          startLocationUpdates();
+        } else {
+          console.log('Location permission denied');
+          gotoSetting();
+        }
+      } else {
+        startLocationUpdates();
+      }
+    };
+    requestPermission();
+    return () => {
+      // Clear watcher on component unmount
+      if (locationWatcher) {
+        Geolocation.clearWatch(locationWatcher);
+      }
+    };
+  }, []);
+
+  const {psUser, fetchLocation, userDetail, gotoSetting} = useAuthContext();
 
   const [circleColor, setCircleColor] = useState('yellow');
 
@@ -112,7 +223,7 @@ export default function MapComponent() {
   useEffect(() => {
     const fetchAndCheckProximity = async () => {
       showToast('Chages in Latitude and longitude');
-      await fetchLocation(); // Initial fetch
+      // await fetchLocation(); // Initial fetch
       // Check if location is available after fetching
       if (location) {
         checkProximity(location);
@@ -123,63 +234,15 @@ export default function MapComponent() {
     };
     // Call fetchAndCheckProximity on component mount
     fetchAndCheckProximity();
-  }, [userDetail?.coordination.latitude || userDetail?.coordination?.latitude]);
+  }, []);
 
   // Watch for changes in location and check proximity
   useEffect(() => {
-    console.log(location, 'location111111111233232493247498');
     if (location) {
       checkProximity(location);
     } else {
     }
-  }, [location]); // Dependency array watches for location changes
-
-  const [count, setCount] = useState(0);
-
-  const updateUserCoordinates = async location => {
-    console.log(location, 'locationlocationlocationlocation');
-    try {
-      console.log('checking....', userDetail?.id);
-      // const userRef = firestore().collection('users').doc(userDetail?.id); // Assuming `userId` is available
-      try {
-        console.log(location.latitude, 'location.latitude');
-        console.log(location.latitude + 1, 'MMMm');
-        await firestore()
-          .collection('users')
-          .doc(userDetail?.id)
-          .update({
-            coordination: {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            },
-            count: count + 1,
-          });
-        setCount(prev => prev + 1);
-        console.log('Updated....');
-      } catch (error) {
-        console.log('error is :', error);
-      }
-    } catch (error) {
-      console.error('Error updating coordinates in Firebase: ', error);
-    }
-  };
-  const intervalRef = useRef(null);
-
-  useEffect(() => {
-    // Only start the interval once, when the component mounts and not every time location or userDetail changes
-    // if (intervalRef.current) {
-    intervalRef.current = setInterval(async () => {
-      if (location && userDetail?.id) {
-        // Alert.alert("for 5 seconds")
-        await fetchLocation();
-        // console.log(location, 'location');
-        await updateUserCoordinates(location); // Update location every 5 seconds
-      }
-    }, 9000); // Set interval for 5 seconds
-    // }
-    // Cleanup function to clear the interval when the component unmounts or location/userDetail changes
-    return () => clearInterval(intervalRef.current);
-  }, [location, userDetail?.id]); // Only trigger the effect when location or userDetail changes
+  }, []); // Dependency array watches for location changes
 
   return (
     <View style={styles.mapWrapper}>
