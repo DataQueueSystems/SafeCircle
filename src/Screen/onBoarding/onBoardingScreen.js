@@ -40,13 +40,13 @@ const OnboardingScreen = ({}) => {
       onDone={handleBtnPress} // Navigate after the last onboarding screen
       pages={[
         {
-          backgroundColor: theme.colors.onboardingBackground1,
+          backgroundColor: theme.colors.onBackground,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
                 icon="uis:coronavirus"
                 size={iconSize}
-                color={'#3d737f'}
+                color={theme.colors.error}
               />
             </View>
           ),
@@ -59,13 +59,13 @@ const OnboardingScreen = ({}) => {
           },
         },
         {
-          backgroundColor: theme.colors.onboardingBackground2,
+          backgroundColor: theme.colors.onBackground,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
                 icon="carbon:heat-map"
                 size={iconSize}
-                color={'#3d737f'}
+                color={theme.colors.error}
               />
             </View>
           ),
@@ -78,13 +78,13 @@ const OnboardingScreen = ({}) => {
           },
         },
         {
-          backgroundColor: theme.colors.onboardingBackground3,
+          backgroundColor: theme.colors.onBackground,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
                 icon="hugeicons:safe"
                 size={iconSize}
-                color={'#3d737f'}
+                color={theme.colors.error}
               />
             </View>
           ),
@@ -102,17 +102,7 @@ const OnboardingScreen = ({}) => {
                 Receive important notifications about COVID-19 updates, nearby
                 cases, and safety measures.
               </Text>
-              <Button
-                onPress={handleBtnPress}
-                mode="contained"
-                style={[
-                  styles.btn,
-                  {backgroundColor: theme.colors.onBackground},
-                ]}>
-                <BoldText style={{color: theme.colors.background}}>
-                  Get Started
-                </BoldText>
-              </Button>
+              
             </View>
           ),
           titleStyles: {

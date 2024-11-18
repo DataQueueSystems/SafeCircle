@@ -240,7 +240,7 @@ export default function ControlUser({route}) {
                 {backgroundColor: !IsAdmin ? 'grey' : theme.colors.red},
                 form?.diagnosis.status === 'Positive' && {
                   borderWidth: 2,
-                  borderColor: '#fff', // Change to the color you want for the selected border
+                  borderColor: theme.colors.onBackground, // Change to the color you want for the selected border
                 },
               ]}>
               <BoldText style={styles.statusText}>Positive</BoldText>
@@ -255,7 +255,7 @@ export default function ControlUser({route}) {
                 {backgroundColor: !IsAdmin ? 'grey' : theme.colors.green},
                 form?.diagnosis.status === 'Negative' && {
                   borderWidth: 2,
-                  borderColor: '#fff', // Change to the color you want for the selected border
+                  borderColor: theme.colors.onBackground, // Change to the color you want for the selected border
                 },
               ]}>
               <BoldText style={styles.statusText}>Negative</BoldText>

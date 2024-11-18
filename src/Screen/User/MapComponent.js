@@ -244,6 +244,7 @@ export default function MapComponent() {
     }
   }, []); // Dependency array watches for location changes
 
+
   return (
     <View style={styles.mapWrapper}>
       {location ? (
