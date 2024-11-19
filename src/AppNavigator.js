@@ -11,7 +11,6 @@ import {ActivityIndicator, useTheme} from 'react-native-paper';
 import Parent from './Screen/Parent';
 import ControlUser from './Screen/Admin/ControlUser';
 import Register from './Screen/auth/Register';
-import CheckDetail from './Screen/CheckDetail';
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -87,11 +86,7 @@ export default function AppNavigator() {
               component={ControlUser}
               options={{headerShown: false}}
             />
-            <Stack.Screen
-              name="Checkdetail"
-              component={CheckDetail}
-              options={{headerShown: false}}
-            />
+            
           </>
         )}
       </Stack.Navigator>

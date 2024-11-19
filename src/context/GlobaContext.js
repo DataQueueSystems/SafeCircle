@@ -26,10 +26,9 @@ export const AuthContextProvider = ({children}) => {
 
   const GetUserDetail = async () => {
     const userToken = await AsyncStorage.getItem('token');
-
     if (!userToken) return;
     try {
-      const unsubscribe = firestore()
+      const unsubscribe = await firestore()
         .collection('users') // Assuming agents are in the `users` collection
         .doc(userToken)
         .onSnapshot(async userDoc => {
@@ -118,7 +117,6 @@ export const AuthContextProvider = ({children}) => {
           await setLocation(position.coords); // Update location state
         },
         error => {
-          console.error('Error:', error.code, error.message);
           Alert.alert('Location Error', error.message);
         },
         {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},

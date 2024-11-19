@@ -113,7 +113,7 @@ export default function MapComponent() {
         // Check if the last update was more than 10 seconds ago
         if (currentTime - lastUpdateTime >= 10000) {
           // Call the function to update user coordinates in Firebase
-          updateUserCoordinates({latitude, longitude});
+          await updateUserCoordinates({latitude, longitude});
           // Update the last update time
           lastUpdateTime = currentTime;
         } else {
@@ -170,7 +170,7 @@ export default function MapComponent() {
       error => {
         console.log('Error fetching current location:', error.message);
       },
-      {enableHighAccuracy: true, timeout: 25000, maximumAge: 10000},
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
     );
   };
 
@@ -182,7 +182,7 @@ export default function MapComponent() {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           await getCurrentLocation();
-          startLocationUpdates();
+          await startLocationUpdates();
         } else {
           console.log('Location permission denied');
           gotoSetting('Location');
@@ -231,7 +231,6 @@ export default function MapComponent() {
       return distance <= 10; // 10 meters proximity
     });
     if (isNearby) DisplayNotification();
-
     setCircleColor(
       isNearby ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 122, 255, 0.3)',
     );
@@ -252,15 +251,7 @@ export default function MapComponent() {
     };
     // Call fetchAndCheckProximity on component mount
     fetchAndCheckProximity();
-  }, []);
-
-  // Watch for changes in location and check proximity
-  useEffect(() => {
-    if (location) {
-      checkProximity(location);
-    } else {
-    }
-  }, [count]); // Dependency array watches for location changes
+  }, [count]);
 
   let iconSize = 20;
   let textColor = {color: '#fff'};
@@ -277,12 +268,12 @@ export default function MapComponent() {
       {location ? (
         <MapView
           style={{flex: 1}}
-          region={{
-            latitude: location.latitude,
-            longitude: location.longitude,
-            latitudeDelta: 0.0025, // Extremely zoomed-in
-            longitudeDelta: 0.0025, // Extremely zoomed-in
-          }}
+          // region={{
+          //   latitude: location.latitude,
+          //   longitude: location.longitude,
+          //   latitudeDelta: 0.0025, // Extremely zoomed-in
+          //   longitudeDelta: 0.0025, // Extremely zoomed-in
+          // }}
           showsUserLocation={true} // Shows the user's location on the map
         >
           {/* Display Other user */}
@@ -418,10 +409,6 @@ export default function MapComponent() {
       ) : (
         <></>
       )}
-
-      <Button onPress={() => navigation.navigate('Checkdetail')}>
-        check Location Detial
-      </Button>
     </View>
   );
 }
