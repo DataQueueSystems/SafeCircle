@@ -6,6 +6,7 @@ import {showToast} from '../../utils/Toast.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation'; // Import Geolocation
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import notifee, {AndroidImportance} from '@notifee/react-native';
 
 const Authcontext = createContext();
 export const AuthContextProvider = ({children}) => {
@@ -53,10 +54,10 @@ export const AuthContextProvider = ({children}) => {
 
   const [location, setLocation] = useState(null);
 
-  const gotoSetting = () => {
+  const gotoSetting = data => {
     Alert.alert(
-      'Notification Permission Denied',
-      'Please grant permission for notifications in the app settings to continue.',
+      `${data} Permission Denied`,
+      `Please grant permission for ${data} in the app settings to continue.`,
       [
         {
           text: 'Open Settings',
@@ -69,6 +70,7 @@ export const AuthContextProvider = ({children}) => {
         },
       ],
     );
+    return <></>;
   };
 
   const handlePermissionStatus = result => {
@@ -78,17 +80,17 @@ export const AuthContextProvider = ({children}) => {
         break;
       case RESULTS.DENIED:
         // showToast('Location permission denied');
-        gotoSetting();
+        gotoSetting('Location');
         break;
       case RESULTS.BLOCKED:
         showToast(
           'Location permission is blocked; ask the user to enable it in settings',
         );
-        gotoSetting();
+        gotoSetting('Location');
         break;
       case RESULTS.UNAVAILABLE:
         showToast('Location permission is unavailable on this device');
-        gotoSetting();
+        gotoSetting('Location');
         break;
       default:
         break;
@@ -191,6 +193,40 @@ export const AuthContextProvider = ({children}) => {
     );
   };
 
+  const [isNPermission, setIsNPermission] = useState(false);
+
+  const createNotificationChannel = async () => {
+    await notifee.createChannel({
+      id: 'd_alert', // Unique ID for this channel
+      name: 'Diagnosis Alerts',
+      sound: 'alert', // Custom sound file name without extension
+      importance: AndroidImportance.HIGH,
+    });
+  };
+  const requestNotificationPermission = async () => {
+    try {
+      const setting = await notifee.requestPermission();
+      if (setting.authorizationStatus == 1) {
+        console.log('Notification permission granted');
+        setIsNPermission(true);
+        await createNotificationChannel();
+      } else {
+        console.log('Notification permission denied');
+        setIsNPermission(false);
+        gotoSetting('Notifcation');
+      }
+    } catch (error) {
+      console.log('error is :', error);
+    }
+  };
+
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      await requestNotificationPermission();
+    };
+    initializeNotifications();
+  }, []);
+
   return (
     <Authcontext.Provider
       value={{
@@ -218,6 +254,10 @@ export const AuthContextProvider = ({children}) => {
         location,
         setLocation,
         gotoSetting,
+
+        // Notifcation Permission
+        isNPermission,
+        requestNotificationPermission,
       }}>
       {children}
     </Authcontext.Provider>

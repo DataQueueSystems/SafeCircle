@@ -62,7 +62,7 @@ export default function ControlUser({route}) {
 
   let showInputs = screenName === 'Add User' || screenName === 'Edit Detail';
   let showPass = screenName === 'Edit Detail';
-  console.log(showPass, 'showPass');
+  
   // Simple validation function
   const validateForm = () => {
     const newErrors = {};
@@ -93,6 +93,10 @@ export default function ControlUser({route}) {
           role: 'user',
           Status: 'Active',
           create_date: new Date().toISOString(), // Current date and time in ISO format
+          coordination: {
+            latitude: 12.871365,
+            longitude: 74.84628,
+          },
         };
         defaultData.addedBy = userDetail?.role == 'admin' ? 'Admin' : 'User';
 
@@ -105,6 +109,7 @@ export default function ControlUser({route}) {
             .update(defaultData);
           showToast(IsAdmin ? 'User Updated  ..' : 'Profile Updated');
         } else {
+          
           await firestore().collection('users').add(defaultData);
           showToast('User Added  ..');
         }

@@ -11,11 +11,11 @@ import {ActivityIndicator, useTheme} from 'react-native-paper';
 import Parent from './Screen/Parent';
 import ControlUser from './Screen/Admin/ControlUser';
 import Register from './Screen/auth/Register';
+import CheckDetail from './Screen/CheckDetail';
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const {isLogin, setIsLogin} = useAuthContext();
-  
 
   let theme = useTheme();
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function AppNavigator() {
       <>
         <SafeAreaView style={[styles.container]}>
           <ActivityIndicator
-            color={theme.colors.appcolor}
+            color={theme.colors.onBackground}
             size="large"
             style={[styles.loader]}
           />
@@ -49,7 +49,7 @@ export default function AppNavigator() {
   };
 
   return (
-    <NavigationContainer >
+    <NavigationContainer>
       <Stack.Navigator>
         {isLogin ? (
           <>
@@ -81,10 +81,15 @@ export default function AppNavigator() {
               component={Parent}
               options={{headerShown: false}}
             />
-            
+
             <Stack.Screen
               name="ControlUser"
               component={ControlUser}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="Checkdetail"
+              component={CheckDetail}
               options={{headerShown: false}}
             />
           </>

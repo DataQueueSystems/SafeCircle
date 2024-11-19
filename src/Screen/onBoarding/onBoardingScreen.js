@@ -15,6 +15,7 @@ import {useNavigation} from '@react-navigation/native';
 import {showToast} from '../../../utils/Toast';
 import BoldText from '../../customText/BoldText';
 import {Iconify} from 'react-native-iconify';
+import RegularText from '../../customText/RegularText';
 
 const OnboardingScreen = ({}) => {
   let navigation = useNavigation();
@@ -32,7 +33,7 @@ const OnboardingScreen = ({}) => {
       navigation.navigate('Home');
     }
   };
-  let iconSize = 210;
+  let iconSize = 180;
 
   return (
     <Onboarding
@@ -40,7 +41,7 @@ const OnboardingScreen = ({}) => {
       onDone={handleBtnPress} // Navigate after the last onboarding screen
       pages={[
         {
-          backgroundColor: theme.colors.onBackground,
+          backgroundColor: theme.colors.background,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
@@ -50,16 +51,25 @@ const OnboardingScreen = ({}) => {
               />
             </View>
           ),
-          subtitle:
-            'Stay informed, stay safe. Track your COVID-19 diagnostic results and receive timely alerts for your safety.',
-          subTitleStyles: {
-            fontFamily: 'Sora-Regular', // Replace with your desired font family for the subtitle
-            fontSize: 17, // Customize font size if needed
-            color: '#666', // Customize text color if needed
-          },
+
+          subtitle: (
+            <View>
+              <RegularText
+                style={{
+                  marginBottom: 10,
+                  marginHorizontal: 15,
+                  fontFamily: 'Sora-Regular',
+                  fontSize: 17, // Customize font size if needed
+                  textAlign: 'center',
+                }}>
+                Stay informed, stay safe. Track your COVID-19 diagnostic results
+                and receive timely alerts for your safety.
+              </RegularText>
+            </View>
+          ),
         },
         {
-          backgroundColor: theme.colors.onBackground,
+          backgroundColor: theme.colors.background,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
@@ -69,16 +79,24 @@ const OnboardingScreen = ({}) => {
               />
             </View>
           ),
-          subtitle:
-            'Easily log your symptoms and diagnostic results to stay on top of your health and well-being.',
-          subTitleStyles: {
-            fontFamily: 'Sora-Regular',
-            fontSize: 17, // Customize font size if needed
-            color: '#666',
-          },
+
+          subtitle: (
+            <View>
+              <RegularText
+                style={{
+                  marginBottom: 10,
+                  marginHorizontal: 15,
+                  fontSize: 17, // Customize font size if needed
+                  textAlign: 'center',
+                }}>
+                Easily log your symptoms and diagnostic results to stay on top
+                of your health and well-being.
+              </RegularText>
+            </View>
+          ),
         },
         {
-          backgroundColor: theme.colors.onBackground,
+          backgroundColor: theme.colors.background,
           title: (
             <View style={styles.contentIcons}>
               <Iconify
@@ -90,26 +108,18 @@ const OnboardingScreen = ({}) => {
           ),
           subtitle: (
             <View>
-              <Text
+              <RegularText
                 style={{
                   marginBottom: 10,
-                  marginHorizontal: 5,
-                  fontFamily: 'Sora-Regular',
+                  marginHorizontal: 15,
                   fontSize: 17, // Customize font size if needed
-                  color: '#666',
                   textAlign: 'center',
                 }}>
                 Receive important notifications about COVID-19 updates, nearby
                 cases, and safety measures.
-              </Text>
-              
+              </RegularText>
             </View>
           ),
-          titleStyles: {
-            fontFamily: 'Sora-Bold',
-            fontSize: 24,
-            color: '#000',
-          },
         },
       ]}
     />

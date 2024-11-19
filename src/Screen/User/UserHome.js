@@ -95,6 +95,7 @@ export default function UserHome() {
           </View>
         </View>
 
+
         {/* Display Map */}
         <MapComponent />
       </View>
@@ -149,4 +150,5 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 100,
   },
+ 
 });

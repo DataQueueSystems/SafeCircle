@@ -4,6 +4,7 @@ import AppNavigator from './src/AppNavigator';
 import {ThemeContext, ThemeProvider} from './src/context/ThemeProvider';
 import {PaperProvider} from 'react-native-paper';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {MapContextProvider} from './src/context/MapContext';
 
 export default function App() {
   return (
@@ -26,9 +27,11 @@ function AppWithTheme() {
   return (
     <>
       <AuthContextProvider>
+        {/* <MapContextProvider> */}
         <PaperProvider theme={theme}>
           <AppNavigator />
         </PaperProvider>
+        {/* </MapContextProvider> */}
       </AuthContextProvider>
     </>
   );

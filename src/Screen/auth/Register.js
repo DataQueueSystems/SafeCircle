@@ -113,8 +113,6 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
-  console.log(location, 'location');
-
   const handleRegister = async () => {
     if (validateForm()) {
       let CanAdd = await CheckDataBase(); // Checks for existing user

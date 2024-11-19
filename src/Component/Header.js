@@ -3,11 +3,9 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Appbar, Button, Divider, Menu, TextInput} from 'react-native-paper';
 import {useTheme} from 'react-native-paper';
 import {View, StyleSheet} from 'react-native';
-import globalStyles from '../Styles/Globalstyle';
 
 const Header = ({screenName}) => {
   let theme = useTheme();
-  let GlobalStyle = globalStyles(theme);
   let navigation = useNavigation();
   const BackNavigation = () => {
     navigation.goBack();
