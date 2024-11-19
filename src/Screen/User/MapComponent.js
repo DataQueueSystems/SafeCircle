@@ -60,44 +60,47 @@ import {
   Platform,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import MapView, {Circle, Marker} from 'react-native-maps';
 import {useAuthContext} from '../../context/GlobaContext';
 import BoldText from '../../customText/BoldText';
 import {Iconify} from 'react-native-iconify';
-import {useTheme} from 'react-native-paper';
+import {Button, useTheme} from 'react-native-paper';
 import RegularText from '../../customText/RegularText';
 import firestore from '@react-native-firebase/firestore';
 import {showToast} from '../../../utils/Toast';
 import Geolocation from '@react-native-community/geolocation';
+import notifee from '@notifee/react-native';
+import {useNavigation} from '@react-navigation/native';
 
 export default function MapComponent() {
   let theme = useTheme();
+  let navigation = useNavigation();
 
   const [location, setLocation] = useState(null);
   const [count, setCount] = useState(0);
 
-  // const intervalRef = useRef(null);
-
-  // useEffect(() => {
-  //   // Only start the interval once, when the component mounts and not every time location or userDetail changes
-  //   // if (intervalRef.current) {
-  //   intervalRef.current = setInterval(async () => {
-  //     if (location && userDetail?.id) {
-  //       // Alert.alert("for 5 seconds")
-  //       await fetchLocation();
-  //       // console.log(location, 'location');
-  //       await updateUserCoordinates(location); // Update location every 5 seconds
-  //     }
-  //   }, 9000); // Set interval for 5 seconds
-  //   // }
-  //   // Cleanup function to clear the interval when the component unmounts or location/userDetail changes
-  //   return () => clearInterval(intervalRef.current);
-  // }, [location, userDetail?.id]); // Only trigger the effect when location or userDetail changes
+  const {
+    psUser,
+    requestNotificationPermission,
+    userDetail,
+    gotoSetting,
+    isNPermission,
+  } = useAuthContext();
 
   let locationWatcher = null;
   let lastUpdateTime = 0; // Store the last update time
+  const DisplayNotification = async () => {
+    await notifee.displayNotification({
+      title: 'Stay Alert!',
+      body: 'Nearby diagnosed individuals have been detected. Please maintain distance and stay safe.',
+      android: {
+        channelId: 'd_alert',
+      },
+    });
+  };
 
   const startLocationUpdates = () => {
     // Start watching position
@@ -131,8 +134,6 @@ export default function MapComponent() {
 
   const updateUserCoordinates = async location => {
     try {
-      // console.log('Checking user id:', userDetail?.id);
-
       if (userDetail?.id) {
         try {
           // Update coordinates in Firestore
@@ -159,6 +160,20 @@ export default function MapComponent() {
     }
   };
 
+  const getCurrentLocation = async () => {
+    await Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        setLocation(position.coords);
+        console.log('Initial Position:', latitude, longitude);
+      },
+      error => {
+        console.log('Error fetching current location:', error.message);
+      },
+      {enableHighAccuracy: true, timeout: 25000, maximumAge: 10000},
+    );
+  };
+
   useEffect(() => {
     const requestPermission = async () => {
       if (Platform.OS === 'android') {
@@ -166,10 +181,11 @@ export default function MapComponent() {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          await getCurrentLocation();
           startLocationUpdates();
         } else {
           console.log('Location permission denied');
-          gotoSetting();
+          gotoSetting('Location');
         }
       } else {
         startLocationUpdates();
@@ -184,9 +200,7 @@ export default function MapComponent() {
     };
   }, []);
 
-  const {psUser, fetchLocation, userDetail, gotoSetting} = useAuthContext();
-
-  const [circleColor, setCircleColor] = useState('yellow');
+  const [circleColor, setCircleColor] = useState('rgba(0, 122, 255, 0.3)');
 
   // Function to calculate distance between two points (Haversine formula)
   const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
@@ -205,15 +219,19 @@ export default function MapComponent() {
 
   // Function to check proximity to any marker
   const checkProximity = userLocation => {
-    const isNearby = psUser.some(user => {
+    // console.log(location);
+
+    const isNearby = psUser?.some(user => {
       const distance = getDistanceFromLatLonInMeters(
-        userLocation.latitude,
-        userLocation.longitude,
+        userLocation?.latitude,
+        userLocation?.longitude,
         user?.coordination?.latitude,
         user?.coordination?.longitude,
       );
       return distance <= 10; // 10 meters proximity
     });
+    if (isNearby) DisplayNotification();
+
     setCircleColor(
       isNearby ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 122, 255, 0.3)',
     );
@@ -242,8 +260,17 @@ export default function MapComponent() {
       checkProximity(location);
     } else {
     }
-  }, []); // Dependency array watches for location changes
+  }, [count]); // Dependency array watches for location changes
 
+  let iconSize = 20;
+  let textColor = {color: '#fff'};
+
+  const handleLocation = () => {
+    gotoSetting('Location');
+  };
+  const handleNotification = () => {
+    requestNotificationPermission();
+  };
 
   return (
     <View style={styles.mapWrapper}>
@@ -253,33 +280,14 @@ export default function MapComponent() {
           region={{
             latitude: location.latitude,
             longitude: location.longitude,
-            latitudeDelta: 0.0922,
-            longitudeDelta: 0.0421,
+            latitudeDelta: 0.0025, // Extremely zoomed-in
+            longitudeDelta: 0.0025, // Extremely zoomed-in
           }}
           showsUserLocation={true} // Shows the user's location on the map
         >
           {/* Display Other user */}
-
           {psUser && (
             <>
-              {/* {markers.map(markers => (
-                <Marker
-                  subtitleVisibility="visible"
-                  key={markers?.id}
-                  coordinate={{
-                    latitude: markers?.latitude,
-                    longitude: markers?.longitude,
-                  }}
-                  title={markers.title}
-                  description={markers.description}>
-                  <Image
-                    source={{
-                      uri: 'https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-622.jpg?w=1380',
-                    }}
-                    style={{width: 40, height: 40}}
-                  />
-                </Marker>
-              ))} */}
               {psUser?.map(user => (
                 <Marker
                   subtitleVisibility="visible"
@@ -300,7 +308,6 @@ export default function MapComponent() {
               ))}
             </>
           )}
-
           {/* App user */}
           {location && (
             <Marker
@@ -308,7 +315,8 @@ export default function MapComponent() {
               coordinate={{
                 latitude: location.latitude,
                 longitude: location.longitude,
-              }}>
+              }}
+              title="Your Location">
               <Image
                 source={{
                   uri: 'https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-622.jpg?w=1380',
@@ -333,15 +341,15 @@ export default function MapComponent() {
         <View style={styles.fetchView}>
           <ActivityIndicator size={55} color={theme.colors.onBackground} />
           <View style={styles.loadingContent}>
-            <BoldText style={{fontSize: 25}}>
+            <BoldText style={{fontSize: 23}}>
               Fetching your location ..
             </BoldText>
             <Iconify
               icon="grommet-icons:map-location"
-              size={100}
+              size={80}
               color={theme.colors.onBackground}
             />
-            <BoldText style={{fontSize: 25}}>Stay Safe!</BoldText>
+            <BoldText style={{fontSize: 22}}>Stay Safe!</BoldText>
             <RegularText
               style={{
                 fontSize: 13,
@@ -355,6 +363,65 @@ export default function MapComponent() {
           </View>
         </View>
       )}
+
+      {!isNPermission || location == null ? (
+        <View
+          style={[
+            styles.Permissioncontainer,
+            {backgroundColor: theme.colors.error},
+          ]}>
+          {location == null && (
+            <View style={styles.row}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <Iconify
+                  icon="mage:location-fill"
+                  size={iconSize}
+                  color={'#fff'}
+                />
+                <RegularText style={[styles.text, textColor]}>
+                  Location Permission Denied
+                </RegularText>
+              </View>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={handleLocation}>
+                <RegularText style={[styles.text, textColor]}>
+                  Settings
+                </RegularText>
+              </TouchableOpacity>
+            </View>
+          )}
+          {!isNPermission && (
+            <View style={styles.row}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <Iconify
+                  icon="solar:bell-outline"
+                  size={iconSize}
+                  color={'#fff'}
+                />
+                <RegularText style={[styles.text, textColor]}>
+                  Notification Permission Denied
+                </RegularText>
+              </View>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={handleNotification}>
+                <RegularText style={[styles.text, textColor]}>
+                  Request / Settings
+                </RegularText>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ) : (
+        <></>
+      )}
+
+      <Button onPress={() => navigation.navigate('Checkdetail')}>
+        check Location Detial
+      </Button>
     </View>
   );
 }
@@ -377,5 +444,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
+  },
+  Permissioncontainer: {
+    // alignItems: 'flex-start',
+    backgroundColor: 'red',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    justifyContent: 'space-between',
+  },
+  text: {
+    fontSize: 12,
+  },
+  actionBtn: {
+    padding: 1.3,
+    borderWidth: 0.2,
+    borderRadius: 100,
+    paddingHorizontal: 10,
   },
 });
