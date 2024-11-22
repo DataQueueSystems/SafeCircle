@@ -26,10 +26,8 @@ export default function UserHome() {
   const showMyDetail = () => {
     bottomSheetRef2.current?.expand(); // Use expand instead of open
   };
-
   const backPressedOnce = useRef(false);
   const isFocused = useIsFocused();
-
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -54,7 +52,9 @@ export default function UserHome() {
     return () => backHandler.remove();
   }, [isFocused]);
 
+
   return (
+
     <>
       <View
         style={[
