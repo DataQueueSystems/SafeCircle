@@ -50,7 +50,8 @@ export default function UserHome() {
     );
 
     return () => backHandler.remove();
-  }, [isFocused]) ;
+  }, [isFocused]);
+
 
   return (
 
