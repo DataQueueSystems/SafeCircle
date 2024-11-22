@@ -55,6 +55,7 @@ export default function UserHome() {
   }, [isFocused]);
 
   return (
+    
     <>
       <View
         style={[
