@@ -13,7 +13,6 @@ import {Button, useTheme} from 'react-native-paper';
 import {useAuthContext} from '../../context/GlobaContext';
 import {useNavigation} from '@react-navigation/native';
 import {showToast} from '../../../utils/Toast';
-import BoldText from '../../customText/BoldText';
 import {Iconify} from 'react-native-iconify';
 import RegularText from '../../customText/RegularText';
 
@@ -39,6 +38,26 @@ const OnboardingScreen = ({}) => {
     <Onboarding
       onSkip={handleBtnPress} // Replace 'HomeScreen' with your desired navigation target
       onDone={handleBtnPress} // Navigate after the last onboarding screen
+      skipLabel={
+        <RegularText
+          style={{
+            fontSize: 16,
+            color: theme.colors.appColor,
+            fontFamily: 'Sora-Regular',
+          }}>
+          Skip
+        </RegularText>
+      }
+      nextLabel={
+        <RegularText
+          style={{
+            fontSize: 16,
+            color: theme.colors.appColor,
+            fontFamily: 'Sora-Regular',
+          }}>
+          Next
+        </RegularText>
+      }
       pages={[
         {
           backgroundColor: theme.colors.background,
