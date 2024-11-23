@@ -50,16 +50,21 @@ export default function Login() {
         const data = doc.data();
         return data.email == email && data.password == password;
       });
-
       if (!userDoc) {
         setSpinner(false);
         showToast('Invalid email or password');
       } else {
         let userData = {id: userDoc.id, ...userDoc.data()};
-        await setUserDetail(userData);
-        await AsyncStorage.setItem('token', userData.id);
-        AsyncStorage.setItem('IsLogin', 'true');
-        setIsLogin(false);
+        if (userData?.Status === 'Deleted') {
+          showToast('User not found ');
+          setSpinner(false);
+          return;
+        } else {
+          await setUserDetail(userData);
+          await AsyncStorage.setItem('token', userData.id);
+          AsyncStorage.setItem('IsLogin', 'true');
+          setIsLogin(false);
+        }
       }
     } catch (error) {
       showToast('Something went wrong');
