@@ -20,7 +20,6 @@ import RegularText from '../../customText/RegularText';
 
 export default function ControlUser({route}) {
   const {screenName, userData} = route.params || {};
-
   const {userDetail} = useAuthContext();
   const theme = useTheme();
   let navigation = useNavigation();
@@ -62,7 +61,7 @@ export default function ControlUser({route}) {
 
   let showInputs = screenName === 'Add User' || screenName === 'Edit Detail';
   let showPass = screenName === 'Edit Detail';
-  
+
   // Simple validation function
   const validateForm = () => {
     const newErrors = {};
@@ -101,7 +100,7 @@ export default function ControlUser({route}) {
         defaultData.addedBy = userDetail?.role == 'admin' ? 'Admin' : 'User';
 
         //If Edit Screen then update the detail otherwise Add new user
-        if (screenName == 'Edit User') {
+        if (screenName == 'Edit User'||screenName == 'Edit Detail') {
           // await firestore().collection('users');
           await firestore()
             .collection('users')
@@ -109,12 +108,10 @@ export default function ControlUser({route}) {
             .update(defaultData);
           showToast(IsAdmin ? 'User Updated  ..' : 'Profile Updated');
         } else {
-          
           await firestore().collection('users').add(defaultData);
           showToast('User Added  ..');
-        }
+        };
         setSpinner(false);
-
         // navigation.goBack();
       }
     } catch (error) {
@@ -153,7 +150,6 @@ export default function ControlUser({route}) {
           contentStyle={styles.inputContent}
           mode="outlined"
         />
-
         {errors.name && (
           <LightText style={[styles.errorText, {color: theme.colors.red}]}>
             {errors.name}

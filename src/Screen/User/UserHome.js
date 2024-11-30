@@ -9,13 +9,13 @@ import TipsSheet from '../../Component/TipsSheet';
 import MapComponent from './MapComponent';
 import UserSheet from '../../Component/UserSheet';
 import {showToast} from '../../../utils/Toast';
+import firestore from '@react-native-firebase/firestore';
 // import MapComponent from './Map';
 
 export default function UserHome() {
   let theme = useTheme();
-  const {handleLogout, userDetail} = useAuthContext();
+  const {handleLogout, userDetail, setUserDetail, setPSuser} = useAuthContext();
   const bottomSheetRef = useRef(null);
-
   let navigation = useNavigation();
 
   const handleTipsPress = () => {
@@ -52,9 +52,68 @@ export default function UserHome() {
     return () => backHandler.remove();
   }, [isFocused]);
 
+  // const GetUserDetail = async () => {
+  //   const userToken = await AsyncStorage.getItem('token');
+  //   if (!userToken) return;
+  //   try {
+  //     const unsubscribe = await firestore()
+  //       .collection('users') // Assuming agents are in the `users` collection
+  //       .doc(userToken)
+  //       .onSnapshot(async userDoc => {
+  //         if (!userDoc.exists) {
+  //           return;
+  //         }
+  //         const userData = {id: userDoc.id, ...userDoc.data()};
+  //         // Set user details if the account is active
+  //         await setUserDetail(userData);
+  //       });
+
+  //     // Clean up the listener when the component unmounts or userToken changes
+  //     return () => unsubscribe();
+  //   } catch (error) {
+  //     console.error('Error fetching user details:', error);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   GetUserDetail();
+  // }, [userDetail]);
+
+  const GetAllUser = async () => {
+    try {
+      await firestore()
+        .collection('users')
+        .where('role', '==', 'user')
+        .where('Status', '==', 'Active')
+        .onSnapshot(snapshot => {
+          let alluserDetail = snapshot.docs.map(snapdata => ({
+            id: snapdata.id,
+            ...snapdata.data(),
+          }));
+          // Filter users with Positive diagnosis status
+          const positiveStatusUser = alluserDetail.filter(
+            user =>
+              user.diagnosis?.status === 'Positive' &&
+              user?.id != userDetail?.id,
+          );
+          setPSuser(positiveStatusUser); // Set the filtered list as needed
+        });
+    } catch (error) {
+      console.log('Error is:', error);
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+    unsubscribe = GetAllUser();
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   return (
-
     <>
       <View
         style={[
@@ -81,7 +140,7 @@ export default function UserHome() {
             <View>
               <Iconify
                 onPress={showMyDetail}
-                icon="uim:user-md"
+                icon="solar:user-outline"
                 size={28}
                 color={'grey'}
               />
@@ -94,7 +153,6 @@ export default function UserHome() {
             />
           </View>
         </View>
-
 
         {/* Display Map */}
         <MapComponent />
@@ -150,5 +208,4 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 100,
   },
- 
 });

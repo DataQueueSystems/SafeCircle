@@ -27,7 +27,8 @@ const OnboardingScreen = ({}) => {
   const handleBtnPress = () => {
     if (isLogin) {
       showToast('Login First');
-      navigation.navigate('Login');
+      navigation.navigate('ConfirmRole');
+      // navigation.navigate('Login');
     } else {
       navigation.navigate('Home');
     }

@@ -4,16 +4,16 @@ import NetInfo, {useNetInfoInstance} from '@react-native-community/netinfo';
 import firestore from '@react-native-firebase/firestore';
 import {showToast} from '../../utils/Toast.js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Geolocation from '@react-native-community/geolocation'; // Import Geolocation
 import {request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import notifee, {AndroidImportance} from '@notifee/react-native';
+import Geolocation from 'react-native-geolocation-service';
 
 const Authcontext = createContext();
 export const AuthContextProvider = ({children}) => {
   const [isLogin, setIsLogin] = useState(false);
   const [userDetail, setUserDetail] = useState(null);
-  const [allusers, setAllusers] = useState(null);
-  const [psUser, setPSuser] = useState(null);
+  const [allusers, setAllusers] = useState([]);  //for admin to manage the detail
+  const [psUser, setPSuser] = useState([]);  //for user to dispaly position user in map
 
   const Checknetinfo = async () => {
     const state = await NetInfo.fetch(); // Get the current network state
@@ -28,7 +28,8 @@ export const AuthContextProvider = ({children}) => {
     const userToken = await AsyncStorage.getItem('token');
     if (!userToken) return;
     try {
-      const unsubscribe = await firestore()
+      // const unsubscribe =
+       await firestore()
         .collection('users') // Assuming agents are in the `users` collection
         .doc(userToken)
         .onSnapshot(async userDoc => {
@@ -40,16 +41,22 @@ export const AuthContextProvider = ({children}) => {
           await setUserDetail(userData);
         });
 
-      // Clean up the listener when the component unmounts or userToken changes
-      return () => unsubscribe();
+      // // Clean up the listener when the component unmounts or userToken changes
+      // return () => unsubscribe();
     } catch (error) {
       console.error('Error fetching user details:', error);
     }
   };
 
   useEffect(() => {
-    GetUserDetail();
-  }, []);
+    let unsubscribe = () => {};
+      unsubscribe = GetUserDetail();
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [userDetail?.id]);
 
   const [location, setLocation] = useState(null);
 
@@ -108,62 +115,66 @@ export const AuthContextProvider = ({children}) => {
     return permissions === 'granted';
   };
 
+  const getCurrentLocation = async () => {
+    Geolocation.getCurrentPosition(
+      position => {
+        const {latitude, longitude} = position.coords;
+        setLocation(position.coords);
+      },
+      error => {
+        showToast(error.message);
+      },
+      {enableHighAccuracy: true, timeout: 30000, maximumAge: 0},
+    );
+  };
+
   const fetchLocation = async () => {
     const granted = await hasLocationPermission();
     if (granted) {
       // Get the user's current location
-      Geolocation.getCurrentPosition(
-        async position => {
-          await setLocation(position.coords); // Update location state
-        },
-        error => {
-          Alert.alert('Location Error', error.message);
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
+      await getCurrentLocation();
     } else {
       showToast('To use this app location is must');
     }
   };
 
-  // Fetch Location on Component Mount
+  // const GetAllUser = async () => {
+  //   try {
+  //     const subscriber = firestore()
+  //       .collection('users')
+  //       .where('role', '==', 'user')
+  //       .where('Status', '==', 'Active')
+  //       .onSnapshot(snapshot => {
+  //         let alluserDetail = snapshot.docs.map(snapdata => ({
+  //           id: snapdata.id,
+  //           ...snapdata.data(),
+  //         }));
+  //         setAllusers(alluserDetail);
+  //         // Filter users with Positive diagnosis status
+  //         const positiveStatusUser = alluserDetail.filter(
+  //           user =>
+  //             user.diagnosis?.status === 'Positive' &&
+  //             user?.id != userDetail?.id,
+  //         );
+  //         setPSuser(positiveStatusUser); // Set the filtered list as needed
+  //       });
+  //     // Clean up the listener when the component unmounts
+  //     return () => subscriber();
+  //   } catch (error) {
+  //     console.log('Error is:', error);
+  //   }
+  // };
+
   // useEffect(() => {
-  //   fetchLocation();
-  // }, []);
+  //   let unsubscribe = () => {};
+  //     unsubscribe = GetAllUser();
+  //   return () => {
+  //     if (unsubscribe && typeof unsubscribe === 'function') {
+  //       unsubscribe();
+  //     }
+  //   };
+  // }, [userDetail?.id]);
 
-  const GetAllUser = async () => {
-    try {
-      const subscriber = firestore()
-        .collection('users')
-        .where('role', '==', 'user')
-        .where('Status', '==', 'Active')
-        .onSnapshot(snapshot => {
-          let alluserDetail = snapshot.docs.map(snapdata => ({
-            id: snapdata.id,
-            ...snapdata.data(),
-          }));
-          setAllusers(alluserDetail);
-          // Filter users with Positive diagnosis status
-          const positiveStatusUser = alluserDetail.filter(
-            user =>
-              user.diagnosis?.status === 'Positive' &&
-              user?.id != userDetail?.id,
-          );
-          setPSuser(positiveStatusUser); // Set the filtered list as needed
-        });
-      // Clean up the listener when the component unmounts
-      return () => subscriber();
-    } catch (error) {
-      console.log('Error is:', error);
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = GetAllUser();
-    return () => {
-      if (unsubscribe) unsubscribe(); // Clean up to prevent memory leaks
-    };
-  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -177,10 +188,11 @@ export const AuthContextProvider = ({children}) => {
         },
         {
           text: 'OK', // OK button
-          onPress: () => {
+          onPress: async() => {
             setIsLogin(true);
             AsyncStorage.setItem('IsLogin', 'false');
-            AsyncStorage.clear();
+            await AsyncStorage.removeItem("token");
+            await AsyncStorage.clear();
             setUserDetail(null);
             showToast('Logout successfully!');
             // some logic
@@ -201,6 +213,7 @@ export const AuthContextProvider = ({children}) => {
       importance: AndroidImportance.HIGH,
     });
   };
+
   const requestNotificationPermission = async () => {
     try {
       const setting = await notifee.requestPermission();
@@ -238,9 +251,11 @@ export const AuthContextProvider = ({children}) => {
 
         // all user detail
         allusers,
+        setAllusers,
 
         // all negative status user
         psUser,
+        setPSuser,
 
         // logout func
         handleLogout,

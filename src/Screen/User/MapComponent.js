@@ -1,60 +1,90 @@
-// import { Button, Image, StyleSheet, Text, View } from 'react-native'
-// import React, { useState } from 'react'
-// import MapView, { Callout, Marker } from 'react-native-maps';
+// import React, { useState } from 'react';
+// import { View, Switch, StyleSheet } from 'react-native';
+// import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 
-// export default function MapComponent() {
-//    // State to manage map type
-//    const [mapType, setMapType] = useState('standard'); // Default to 'standard'
+// const App = () => {
+//   // Toggle between standard and dark mode styles
+//   const [isDarkMode, setIsDarkMode] = useState(false);
 
-//    const toggleMapType = () => {
-//     // Toggle between 'standard' and 'satellite'
-//     setMapType(mapType === 'standard' ? 'satellite' : 'standard');
-//   };
-
-//   const handleChange = (region) => {
-//     console.log(region); // This will log the region whenever the map region changes
-//   };
+//   // Map Style JSON
+//   const darkModeStyle = [
+//     {
+//       elementType: 'geometry',
+//       stylers: [{ color: '#212121' }],
+//     },
+//     {
+//       elementType: 'labels.icon',
+//       stylers: [{ visibility: 'on' }],
+//     },
+//     {
+//       elementType: 'labels.text.fill',
+//       stylers: [{ color: '#757575' }],
+//     },
+//     {
+//       elementType: 'labels.text.stroke',
+//       stylers: [{ color: '#212121' }],
+//     },
+//     {
+//       featureType: 'administrative',
+//       elementType: 'geometry',
+//       stylers: [{ color: '#757575' }],
+//     },
+//     {
+//       featureType: 'water',
+//       elementType: 'geometry',
+//       stylers: [{ color: '#000000' }],
+//     },
+//   ];
 
 //   return (
-//    <>
+//     <View style={styles.container}>
+//       {/* MapView Component */}
+//       <MapView
+//         provider={PROVIDER_GOOGLE}
+//         style={styles.map}
+//         initialRegion={{
+//           latitude: 37.78825,
+//           longitude: -122.4324,
+//           latitudeDelta: 0.0922,
+//           longitudeDelta: 0.0421,
+//         }}
+//         customMapStyle={isDarkMode ? darkModeStyle : []} // Apply styles
+//       />
+//       {/* Toggle Switch */}
+//       <View style={styles.switchContainer}>
+//         <Switch
+//           value={isDarkMode}
+//           onValueChange={(value) => setIsDarkMode(value)}
+//         />
+//       </View>
+//     </View>
+//   );
+// };
 
-// <MapView
-//         mapType={mapType} // Dynamically set map type
-//         onRegionChange={handleChange}
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//   },
+//   map: {
+//     ...StyleSheet.absoluteFillObject,
+//   },
+//   switchContainer: {
+//     position: 'absolute',
+//     top: 50,
+//     right: 20,
+//     backgroundColor: 'white',
+//     borderRadius: 20,
+//     padding: 10,
+//   },
+// });
 
-// style={{flex:1}}
-//   initialRegion={{
-//     latitude: 37.78825,
-//     longitude: -122.4324,
-//     latitudeDelta: 0.0922,
-//     longitudeDelta: 0.0421,
-//   }}
-// >
-//   {/* Marker */}
-// {/*
-//         <Marker
-//   subtitleVisibility="visible"
-
-//   coordinate={{ latitude: 37.78825, longitude: -122.4324 }}
-//   title="Custom Marker"
-//   description="This is a custom marker"
-//   image={{uri:'https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-622.jpg?w=1380'}} // Custom image for the marker
-// /> */}
-
-// </MapView>
-// <Button title={`Switch to ${mapType === 'standard' ? 'Satellite' : 'Standard'}`} onPress={toggleMapType} />
-// <Button title="Go to Current Location" onPress={getCurrentLocation} />
-
-//    </>
-//   )
-// }
-
-// const styles = StyleSheet.create({});
+// export default App;
 
 import React, {useEffect, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Appearance,
   Image,
   PermissionsAndroid,
   Platform,
@@ -67,18 +97,20 @@ import MapView, {Circle, Marker} from 'react-native-maps';
 import {useAuthContext} from '../../context/GlobaContext';
 import BoldText from '../../customText/BoldText';
 import {Iconify} from 'react-native-iconify';
-import {Button, useTheme} from 'react-native-paper';
+import {Button, Switch, useTheme} from 'react-native-paper';
 import RegularText from '../../customText/RegularText';
 import firestore from '@react-native-firebase/firestore';
 import {showToast} from '../../../utils/Toast';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
+
 import notifee from '@notifee/react-native';
 import {useNavigation} from '@react-navigation/native';
+import SemiBoldText from '../../customText/SemiBoldText';
 
 export default function MapComponent() {
+  
   let theme = useTheme();
   let navigation = useNavigation();
-
   const [location, setLocation] = useState(null);
   const [count, setCount] = useState(0);
 
@@ -89,7 +121,6 @@ export default function MapComponent() {
     gotoSetting,
     isNPermission,
   } = useAuthContext();
-
   let locationWatcher = null;
   let lastUpdateTime = 0; // Store the last update time
   const DisplayNotification = async () => {
@@ -120,7 +151,7 @@ export default function MapComponent() {
         }
       },
       error => {
-        console.log('Location error:', error);
+        showToast(error?.message);
       },
       {
         enableHighAccuracy: true,
@@ -129,6 +160,7 @@ export default function MapComponent() {
         fastestInterval: 10000, // Minimum time between updates (10 seconds)
         timeout: 15000, // Max time to wait for a position
       },
+      // {enableHighAccuracy: true, timeout: 30000, maximumAge: 0},
     );
   };
 
@@ -139,7 +171,7 @@ export default function MapComponent() {
           // Update coordinates in Firestore
           await firestore()
             .collection('users')
-            .doc(userDetail.id)
+            .doc(userDetail?.id)
             .update({
               coordination: {
                 latitude: location.latitude,
@@ -151,6 +183,7 @@ export default function MapComponent() {
           console.log('Updated coordinates in Firestore.');
         } catch (error) {
           console.log('Error updating coordinates:', error);
+          showToast('Something went wrong ..');
         }
       } else {
         console.log('User ID is not available.');
@@ -165,12 +198,12 @@ export default function MapComponent() {
       position => {
         const {latitude, longitude} = position.coords;
         setLocation(position.coords);
-        console.log('Initial Position:', latitude, longitude);
       },
       error => {
-        console.log('Error fetching current location:', error.message);
+        showToast(error.message);
       },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      // {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      {enableHighAccuracy: true, timeout: 30000, maximumAge: 0},
     );
   };
 
@@ -198,7 +231,7 @@ export default function MapComponent() {
         Geolocation.clearWatch(locationWatcher);
       }
     };
-  }, []);
+  }, [userDetail]);
 
   const [circleColor, setCircleColor] = useState('rgba(0, 122, 255, 0.3)');
 
@@ -239,13 +272,10 @@ export default function MapComponent() {
   // Fetch Location on Component Mount and Watch for Location Changes
   useEffect(() => {
     const fetchAndCheckProximity = async () => {
-      showToast('Chages in Latitude and longitude');
-      // await fetchLocation(); // Initial fetch
-      // Check if location is available after fetching
+      showToast('Updating Latitude and longitude');
       if (location) {
         checkProximity(location);
       } else {
-        showToast('Location not found...');
         // Alert.alert('Location not found....');
       }
     };
@@ -262,6 +292,35 @@ export default function MapComponent() {
   const handleNotification = () => {
     requestNotificationPermission();
   };
+  // Map Style JSON
+  const darkModeStyle = [
+    {
+      elementType: 'geometry',
+      stylers: [{color: '#212121'}],
+    },
+    // {
+    //   elementType: 'labels.icon',
+    //   stylers: [{visibility: 'on'}],
+    // },
+    {
+      elementType: 'labels.text.fill',
+      stylers: [{color: '#757575'}],
+    },
+    {
+      elementType: 'labels.text.stroke',
+      stylers: [{color: '#212121'}],
+    },
+    {
+      featureType: 'administrative',
+      elementType: 'geometry',
+      stylers: [{color: '#757575'}],
+    },
+    {
+      featureType: 'water',
+      elementType: 'geometry',
+      stylers: [{color: '#000000'}],
+    },
+  ];
 
   return (
     <View style={styles.mapWrapper}>
@@ -275,6 +334,9 @@ export default function MapComponent() {
           //   longitudeDelta: 0.0025, // Extremely zoomed-in
           // }}
           showsUserLocation={true} // Shows the user's location on the map
+          customMapStyle={
+            theme.colors.background == '#f7f7f7' ? [] : darkModeStyle
+          } // Apply styles
         >
           {/* Display Other user */}
           {psUser && (
@@ -289,11 +351,10 @@ export default function MapComponent() {
                   }}
                   title={user?.name}
                   description={user?.name}>
-                  <Image
-                    source={{
-                      uri: 'https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-622.jpg?w=1380',
-                    }}
-                    style={{width: 40, height: 40}}
+                  <Iconify
+                    icon="covid:covid19-virus-patient-2"
+                    size={40}
+                    color={theme.colors.red}
                   />
                 </Marker>
               ))}
@@ -307,12 +368,11 @@ export default function MapComponent() {
                 latitude: location.latitude,
                 longitude: location.longitude,
               }}
-              title="Your Location">
-              <Image
-                source={{
-                  uri: 'https://img.freepik.com/premium-vector/man-professional-business-casual-young-avatar-icon-illustration_1277826-622.jpg?w=1380',
-                }}
-                style={{width: 40, height: 40, borderRadius: 20}}
+              title="You">
+              <Iconify
+                icon="bi:people-circle"
+                size={30}
+                color={theme.colors.onBackground}
               />
             </Marker>
           )}
@@ -332,15 +392,15 @@ export default function MapComponent() {
         <View style={styles.fetchView}>
           <ActivityIndicator size={55} color={theme.colors.onBackground} />
           <View style={styles.loadingContent}>
-            <BoldText style={{fontSize: 23}}>
+            <SemiBoldText style={{fontSize: 22}}>
               Fetching your location ..
-            </BoldText>
+            </SemiBoldText>
             <Iconify
               icon="grommet-icons:map-location"
-              size={80}
+              size={70}
               color={theme.colors.onBackground}
             />
-            <BoldText style={{fontSize: 22}}>Stay Safe!</BoldText>
+            <BoldText style={{fontSize: 21}}>Stay Safe!</BoldText>
             <RegularText
               style={{
                 fontSize: 13,

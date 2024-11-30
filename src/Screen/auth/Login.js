@@ -23,7 +23,8 @@ import axios from 'axios';
 import {showToast} from '../../../utils/Toast';
 import firestore, {doc} from '@react-native-firebase/firestore';
 
-export default function Login() {
+export default function Login({route}) {
+  let {selectedRole} = route.params;
   let theme = useTheme();
   const {setIsLogin, Checknetinfo, setUserDetail} = useAuthContext();
   let navigation = useNavigation();
@@ -55,6 +56,11 @@ export default function Login() {
         showToast('Invalid email or password');
       } else {
         let userData = {id: userDoc.id, ...userDoc.data()};
+        if (userData?.role != selectedRole) {
+          showToast('Invalid email or password');
+          setSpinner(false);
+          return;
+        }
         if (userData?.Status === 'Deleted') {
           showToast('User not found ');
           setSpinner(false);
@@ -171,20 +177,22 @@ export default function Login() {
             </Button>
           </View>
 
-          <View
-            style={{
-              marginVertical: 2,
-              alignSelf: 'center',
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}>
-            <LightText>Don't have an account? </LightText>
-            <TouchableOpacity onPress={handleRegister}>
-              <RegularText style={{color: theme.colors.blue}}>
-                Register
-              </RegularText>
-            </TouchableOpacity>
-          </View>
+          {selectedRole == 'user' && (
+            <View
+              style={{
+                marginVertical: 2,
+                alignSelf: 'center',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+              <LightText>Don't have an account? </LightText>
+              <TouchableOpacity onPress={handleRegister}>
+                <RegularText style={{color: theme.colors.blue}}>
+                  Register
+                </RegularText>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.infoContainer}>
             <RegularText style={[styles.infoText, {color: 'grey'}]}>

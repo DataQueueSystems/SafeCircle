@@ -9,8 +9,10 @@ import {
   Alert,
   Image,
   ScrollView,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import BoldText from '../../customText/BoldText';
 import {Button, useTheme} from 'react-native-paper';
 import LightText from '../../customText/LightText';
@@ -113,10 +115,16 @@ export default function Register() {
     return Object.keys(newErrors).length === 0;
   };
 
+  useEffect(() => {
+    const InitialLocation = async () => {
+      await fetchLocation();
+    };
+    InitialLocation();
+  }, []);
+
   const handleRegister = async () => {
     if (validateForm()) {
       let CanAdd = await CheckDataBase(); // Checks for existing user
-
       if (!location) {
         showToast('To use this app location is must ');
         await fetchLocation();
