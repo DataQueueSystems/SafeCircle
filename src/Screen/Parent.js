@@ -6,7 +6,8 @@ import AdminHome from './Admin/AdminHome';
 
 export default function Parent() {
   const {userDetail} = useAuthContext();
-  return <>{userDetail?.role == 'admin' ? <AdminHome /> : <UserHome />}</>;
+  return <>
+  {userDetail?.role == 'admin' ? <AdminHome /> : <UserHome />}
+  </>;
 }
-
 const styles = StyleSheet.create({});

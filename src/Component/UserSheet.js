@@ -29,6 +29,8 @@ const UserSheet = ({bottomSheetRef, userData}) => {
     ),
     [],
   );
+
+
   const handleEdit = () => {
     console.log('fdsbjk');
     bottomSheetRef.current.close();
@@ -116,7 +118,9 @@ const UserSheet = ({bottomSheetRef, userData}) => {
               flexDirection: 'row',
               justifyContent: 'center',
             }}>
-            <Iconify icon="uim:user-md" size={70} color={'grey'} />
+            <Iconify 
+                icon="solar:user-outline"
+                size={70} color={'grey'} />
           </View>
 
           {/* User Detail */}

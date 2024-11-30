@@ -1,77 +1,10 @@
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, PermissionsAndroid, Platform } from 'react-native';
-// import Geolocation from '@react-native-community/geolocation';
-
-// const App = () => {
-//   const [location, setLocation] = useState(null);
-//   const [count, setCount] = useState(0);
-  
-//   let locationWatcher = null;
-
-//   useEffect(() => {
-//     const requestPermission = async () => {
-//       if (Platform.OS === 'android') {
-//         const granted = await PermissionsAndroid.request(
-//           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-//         );
-//         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-//           startLocationUpdates();
-//         } else {
-//           console.log('Location permission denied');
-//         }
-//       } else {
-//         startLocationUpdates();
-//       }
-//     };
-//     requestPermission();
-//     return () => {
-//       // Clear watcher on component unmount
-//       if (locationWatcher) {
-//         Geolocation.clearWatch(locationWatcher);
-//       }
-//     };
-//   }, []);
-
-//   const startLocationUpdates = () => {
-//     console.log('Count location:', count,);
-//     // Start watching position
-//     locationWatcher = Geolocation.watchPosition(
-//       (position) => {
-//         setLocation(position.coords);
-//         setCount((count=>count+1))
-//         console.log('Updated location:', position.coords,);
-//       },
-//       (error) => {
-//         console.log('Location error:', error);
-//       },
-//       {
-//         enableHighAccuracy: true,
-//         distanceFilter: 0, // Receive updates regardless of movement
-//         interval: 2000, // Update every 2 seconds
-//         fastestInterval: 2000, // Minimum time between updates (2 seconds)
-//         timeout: 10000, // Max time to wait for a position
-//       }
-//     );
-//   };
-
-//   return (
-//     <View>
-//       <Text>Live Location:</Text>
-//       {location ? (
-//         <Text>
-//           Latitude: {location.latitude}, Longitude: {location.longitude}
-//         </Text>
-//       ) : (
-//         <Text>Loading location...</Text>
-//       )}
-//     </View>
-//   );
-// };
-
-// export default App;
-
-
-import {BackHandler, FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {
+  BackHandler,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
 import {Text, useTheme} from 'react-native-paper';
 import BoldText from '../../customText/BoldText';
@@ -81,13 +14,15 @@ import RegularText from '../../customText/RegularText';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {useAuthContext} from '../../context/GlobaContext';
 import UserSheet from '../../Component/UserSheet';
-import { showToast } from '../../../utils/Toast';
+import {showToast} from '../../../utils/Toast';
+import firestore from '@react-native-firebase/firestore';
+import moment from 'moment';
 
 const RenderUser = (user, theme, showUserPrev) => {
   let isPositive = user?.diagnosis?.status == 'Positive' ? true : false;
   let addedDetail =
     user?.addedBy == 'Admin' ? 'Added by you ' : 'User himself registered';
-
+  const createDate = moment(user?.create_date).format('DD MMM YYYY'); // Format the date
   return (
     <>
       <TouchableOpacity
@@ -95,11 +30,12 @@ const RenderUser = (user, theme, showUserPrev) => {
         onPress={() => showUserPrev(user)}
         style={[styles.singleUser, {backgroundColor: theme.colors.transpgrey}]}>
         <View style={{alignItems: 'center', flexDirection: 'row'}}>
-          <Iconify icon="uim:user-md" size={35} color={'grey'} />
+          <Iconify icon="solar:user-outline" size={35} color={'grey'} />
         </View>
         <View style={styles.userDetail}>
           <BoldText style={{fontSize: 15}}>{user?.name}</BoldText>
           <RegularText>{addedDetail}</RegularText>
+          <RegularText style={{fontSize: 11}}>{createDate}</RegularText>
         </View>
         {user?.diagnosis?.status && (
           <View
@@ -120,9 +56,11 @@ const RenderUser = (user, theme, showUserPrev) => {
     </>
   );
 };
+
 export default function AdminHome() {
   let theme = useTheme();
-  const {allusers, handleLogout} = useAuthContext();
+  const {allusers, setAllusers, handleLogout, userDetail, setUserDetail} =
+    useAuthContext();
   const [singleUser, setSingleUser] = useState(null);
 
   let navigation = useNavigation();
@@ -131,13 +69,13 @@ export default function AdminHome() {
   };
 
   const bottomSheetRef = useRef(null);
-  
+
   const showUserPrev = userDetail => {
     let userData = userDetail;
     setSingleUser(userData);
     bottomSheetRef.current?.expand(); // Use expand instead of open
   };
-  
+
   const backPressedOnce = useRef(false);
   const isFocused = useIsFocused();
 
@@ -164,6 +102,36 @@ export default function AdminHome() {
 
     return () => backHandler.remove();
   }, [isFocused]);
+
+  const GetAllUser = async () => {
+    try {
+      const subscriber = firestore()
+        .collection('users')
+        .where('role', '==', 'user')
+        .where('Status', '==', 'Active')
+        .onSnapshot(snapshot => {
+          let alluserDetail = snapshot.docs.map(snapdata => ({
+            id: snapdata.id,
+            ...snapdata.data(),
+          }));
+          setAllusers(alluserDetail);
+        });
+      // Clean up the listener when the component unmounts
+      return () => subscriber();
+    } catch (error) {
+      console.log('Error is:', error);
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+    unsubscribe = GetAllUser();
+    return () => {
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   return (
     <>

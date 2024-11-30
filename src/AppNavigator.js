@@ -11,6 +11,7 @@ import {ActivityIndicator, useTheme} from 'react-native-paper';
 import Parent from './Screen/Parent';
 import ControlUser from './Screen/Admin/ControlUser';
 import Register from './Screen/auth/Register';
+import ConfirmScreen from './Screen/auth/ConfirmScreen';
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -34,6 +35,7 @@ export default function AppNavigator() {
       // Clean up the timer if the component unmounts before the delay
       return () => clearTimeout(timer);
     }, [navigation]);
+
     return (
       <>
         <SafeAreaView style={[styles.container]}>
@@ -55,6 +57,11 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Onboarding"
               component={onBoardingScreen}
+              options={{headerShown: false}}
+            />
+            <Stack.Screen
+              name="ConfirmRole"
+              component={ConfirmScreen}
               options={{headerShown: false}}
             />
             <Stack.Screen
@@ -86,7 +93,6 @@ export default function AppNavigator() {
               component={ControlUser}
               options={{headerShown: false}}
             />
-            
           </>
         )}
       </Stack.Navigator>
