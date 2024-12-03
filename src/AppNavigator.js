@@ -16,7 +16,7 @@ const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const {isLogin, setIsLogin} = useAuthContext();
-
+  console.log(isLogin,'isLogin');
   let theme = useTheme();
   useEffect(() => {
     AsyncStorage.getItem('IsLogin').then(value => {
@@ -27,12 +27,10 @@ export default function AppNavigator() {
   }, []);
 
   const Spinner = ({navigation}) => {
-    // const navigation = useNavigation();
     useEffect(() => {
       const timer = setTimeout(() => {
-        navigation.navigate('Parent');
-      }, 100);
-      // Clean up the timer if the component unmounts before the delay
+        navigation.replace('Parent'); // Use `replace` to avoid going back to `Spinner`
+      }, 100); // Delay of 100ms
       return () => clearTimeout(timer);
     }, [navigation]);
 

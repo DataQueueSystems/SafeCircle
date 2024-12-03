@@ -32,7 +32,6 @@ const UserSheet = ({bottomSheetRef, userData}) => {
 
 
   const handleEdit = () => {
-    console.log('fdsbjk');
     bottomSheetRef.current.close();
     let userScreen=userDetail?.role=="user"?"Edit Detail":"Edit User"
     navigation.navigate('ControlUser', {screenName: userScreen, userData});
