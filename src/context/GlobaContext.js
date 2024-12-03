@@ -12,8 +12,9 @@ const Authcontext = createContext();
 export const AuthContextProvider = ({children}) => {
   const [isLogin, setIsLogin] = useState(false);
   const [userDetail, setUserDetail] = useState(null);
-  const [allusers, setAllusers] = useState([]);  //for admin to manage the detail
-  const [psUser, setPSuser] = useState([]);  //for user to dispaly position user in map
+  const [allusers, setAllusers] = useState([]); //for admin to manage the detail
+  const [psUser, setPSuser] = useState([]); //for user to dispaly position user in map
+  const [count, setCount] = useState(0);
 
   const Checknetinfo = async () => {
     const state = await NetInfo.fetch(); // Get the current network state
@@ -23,43 +24,34 @@ export const AuthContextProvider = ({children}) => {
     }
     return true; // Internet connection is available
   };
-
   const GetUserDetail = async () => {
-    const userToken = await AsyncStorage.getItem('token');
-    if (!userToken) return;
     try {
-      // const unsubscribe =
-       await firestore()
-        .collection('users') // Assuming agents are in the `users` collection
-        .doc(userToken)
-        .onSnapshot(async userDoc => {
-          if (!userDoc.exists) {
-            return;
-          }
-          const userData = {id: userDoc.id, ...userDoc.data()};
-          // Set user details if the account is active
-          await setUserDetail(userData);
-        });
+      const userToken = await AsyncStorage.getItem('token');
+      if (!userToken) return; // Exit if no token is found
 
-      // // Clean up the listener when the component unmounts or userToken changes
-      // return () => unsubscribe();
+      // Fetch the document once
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(userToken)
+        .get();
+
+      if (userDoc.exists) {
+        const userData = {id: userDoc.id, ...userDoc.data()};
+        // Set user details if the account is active
+        await setUserDetail(userData);
+      } else {
+        console.warn('User document does not exist');
+      }
     } catch (error) {
       console.error('Error fetching user details:', error);
     }
   };
 
   useEffect(() => {
-    let unsubscribe = () => {};
-      unsubscribe = GetUserDetail();
-    return () => {
-      if (unsubscribe && typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
-  }, [userDetail?.id]);
+    GetUserDetail();
+  }, [count]);
 
   const [location, setLocation] = useState(null);
-
   const gotoSetting = data => {
     Alert.alert(
       `${data} Permission Denied`,
@@ -138,44 +130,6 @@ export const AuthContextProvider = ({children}) => {
     }
   };
 
-  // const GetAllUser = async () => {
-  //   try {
-  //     const subscriber = firestore()
-  //       .collection('users')
-  //       .where('role', '==', 'user')
-  //       .where('Status', '==', 'Active')
-  //       .onSnapshot(snapshot => {
-  //         let alluserDetail = snapshot.docs.map(snapdata => ({
-  //           id: snapdata.id,
-  //           ...snapdata.data(),
-  //         }));
-  //         setAllusers(alluserDetail);
-  //         // Filter users with Positive diagnosis status
-  //         const positiveStatusUser = alluserDetail.filter(
-  //           user =>
-  //             user.diagnosis?.status === 'Positive' &&
-  //             user?.id != userDetail?.id,
-  //         );
-  //         setPSuser(positiveStatusUser); // Set the filtered list as needed
-  //       });
-  //     // Clean up the listener when the component unmounts
-  //     return () => subscriber();
-  //   } catch (error) {
-  //     console.log('Error is:', error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   let unsubscribe = () => {};
-  //     unsubscribe = GetAllUser();
-  //   return () => {
-  //     if (unsubscribe && typeof unsubscribe === 'function') {
-  //       unsubscribe();
-  //     }
-  //   };
-  // }, [userDetail?.id]);
-
-
   const handleLogout = () => {
     Alert.alert(
       'Logout', //title
@@ -188,10 +142,10 @@ export const AuthContextProvider = ({children}) => {
         },
         {
           text: 'OK', // OK button
-          onPress: async() => {
+          onPress: async () => {
             setIsLogin(true);
             AsyncStorage.setItem('IsLogin', 'false');
-            await AsyncStorage.removeItem("token");
+            await AsyncStorage.removeItem('token');
             await AsyncStorage.clear();
             setUserDetail(null);
             showToast('Logout successfully!');
@@ -204,7 +158,6 @@ export const AuthContextProvider = ({children}) => {
   };
 
   const [isNPermission, setIsNPermission] = useState(false);
-
   const createNotificationChannel = async () => {
     await notifee.createChannel({
       id: 'd_alert', // Unique ID for this channel
@@ -244,33 +197,28 @@ export const AuthContextProvider = ({children}) => {
         isLogin,
         setIsLogin,
         Checknetinfo,
-
         // User Detail
         userDetail,
         setUserDetail,
-
         // all user detail
         allusers,
         setAllusers,
-
         // all negative status user
         psUser,
         setPSuser,
-
         // logout func
         handleLogout,
-
         // Fetch location by gettings Permissition
         fetchLocation,
-
         // App user Location
         location,
         setLocation,
         gotoSetting,
-
         // Notifcation Permission
         isNPermission,
         requestNotificationPermission,
+        count,
+        setCount,
       }}>
       {children}
     </Authcontext.Provider>

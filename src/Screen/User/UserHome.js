@@ -52,33 +52,6 @@ export default function UserHome() {
     return () => backHandler.remove();
   }, [isFocused]);
 
-  // const GetUserDetail = async () => {
-  //   const userToken = await AsyncStorage.getItem('token');
-  //   if (!userToken) return;
-  //   try {
-  //     const unsubscribe = await firestore()
-  //       .collection('users') // Assuming agents are in the `users` collection
-  //       .doc(userToken)
-  //       .onSnapshot(async userDoc => {
-  //         if (!userDoc.exists) {
-  //           return;
-  //         }
-  //         const userData = {id: userDoc.id, ...userDoc.data()};
-  //         // Set user details if the account is active
-  //         await setUserDetail(userData);
-  //       });
-
-  //     // Clean up the listener when the component unmounts or userToken changes
-  //     return () => unsubscribe();
-  //   } catch (error) {
-  //     console.error('Error fetching user details:', error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   GetUserDetail();
-  // }, [userDetail]);
-
   const GetAllUser = async () => {
     try {
       await firestore()

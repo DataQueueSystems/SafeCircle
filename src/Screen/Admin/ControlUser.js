@@ -20,7 +20,7 @@ import RegularText from '../../customText/RegularText';
 
 export default function ControlUser({route}) {
   const {screenName, userData} = route.params || {};
-  const {userDetail} = useAuthContext();
+  const {userDetail,setCount} = useAuthContext();
   const theme = useTheme();
   let navigation = useNavigation();
   const [spinner, setSpinner] = useState(false);
@@ -100,17 +100,20 @@ export default function ControlUser({route}) {
         defaultData.addedBy = userDetail?.role == 'admin' ? 'Admin' : 'User';
 
         //If Edit Screen then update the detail otherwise Add new user
-        if (screenName == 'Edit User'||screenName == 'Edit Detail') {
+        if (screenName == 'Edit User' || screenName == 'Edit Detail') {
           // await firestore().collection('users');
           await firestore()
             .collection('users')
             .doc(userData?.id)
             .update(defaultData);
           showToast(IsAdmin ? 'User Updated  ..' : 'Profile Updated');
+          setCount(count=>count+1)
+          await navigation.goBack()
         } else {
           await firestore().collection('users').add(defaultData);
           showToast('User Added  ..');
-        };
+          await navigation.goBack()
+        }
         setSpinner(false);
         // navigation.goBack();
       }

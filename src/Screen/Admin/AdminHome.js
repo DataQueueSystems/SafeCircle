@@ -65,6 +65,7 @@ export default function AdminHome() {
 
   let navigation = useNavigation();
   const handlecontrol = () => {
+    // navigation.navigate('AddUser', {screenName: 'Add User'});
     navigation.navigate('ControlUser', {screenName: 'Add User'});
   };
 
